@@ -1,0 +1,51 @@
+CHEF DA NAVALHA — PROJETO DE AGENDAMENTO
+
+ESTADO REAL
+Este pacote contém a implementação inicial do site e do backend. Ele ainda NÃO está conectado a contas externas nem publicado. Para receber reservas reais, conclua os passos abaixo. Não compartilhe tokens, senhas ou service_role em conversas ou no navegador.
+
+HORÁRIOS
+Segunda a sábado; 09:00, 09:30, 10:00, 10:30, 11:00, 11:30; almoço 12:00–14:00; 14:00, 14:30, 15:00, 15:30, 16:00, 16:30, 17:00, 17:30, 18:00, 18:30, 19:00 e 19:30. Cada reserva dura 30 minutos; domingo fechado.
+
+1. SUPABASE / BANCO
+- Crie projeto em https://supabase.com/
+- Abra SQL Editor e execute todo schema.sql.
+- Em Authentication > Users, crie usuário com e-mail e senha para o dono.
+- Copie o UUID desse usuário e execute no SQL Editor:
+  insert into public.admin_users (user_id) values ('UUID-REAL-DO-USUARIO');
+  Troque o texto pelo UUID real, sem remover as aspas simples.
+- Em Project Settings > API, copie Project URL e a chave publishable/anon pública.
+
+2. CONFIGURAR config.js
+- SUPABASE_URL: URL do projeto
+- SUPABASE_ANON_KEY: chave pública publishable/anon
+- BARBER_WHATSAPP: número do dono, com 55 + DDD + número, apenas dígitos.
+Nunca coloque a service_role key ou token Meta nesse arquivo.
+
+3. PUBLICAR O SITE
+Envie index.html, admin.html, app.js, admin.js, style.css, config.js e logo-chefe-da-navalha.jpeg para hospedagem estática como Vercel ou Netlify. O site ainda não tem endereço público criado. A página do cliente é /index.html; o painel é /admin.html.
+
+4. WHATSAPP AUTOMÁTICO (META CLOUD API)
+- Crie/configure um app em https://developers.facebook.com/ e ative WhatsApp Cloud API.
+- Configure um número remetente e token de acesso válido.
+- Crie e tenha aprovado um template chamado booking_confirmation, idioma pt_BR, com cinco variáveis no corpo na ordem: {{1}} nome, {{2}} serviço, {{3}} data, {{4}} horário, {{5}} preço.
+- Instale a Supabase CLI, faça login e vincule seu projeto:
+  supabase login
+  supabase link --project-ref SEU_PROJECT_REF
+- Publique a função:
+  supabase functions deploy send-booking-notifications --no-verify-jwt
+- Configure secrets no servidor Supabase, nunca no navegador:
+  supabase secrets set SUPABASE_SERVICE_ROLE_KEY="SUA_SERVICE_ROLE_KEY"
+  supabase secrets set WHATSAPP_ACCESS_TOKEN="TOKEN_META"
+  supabase secrets set WHATSAPP_PHONE_NUMBER_ID="ID_DO_NUMERO_META"
+  supabase secrets set BARBER_WHATSAPP="55DDDNUMERO"
+  supabase secrets set WHATSAPP_TEMPLATE_NAME="booking_confirmation"
+  supabase secrets set WHATSAPP_TEMPLATE_LANGUAGE="pt_BR"
+
+A API oficial da Meta pode ter custos conforme as tarifas e regras atuais. O plano gratuito do Supabase/hospedagem tem limites. Não prometa mensagens grátis ou ilimitadas. O cliente deve consentir em receber mensagens.
+
+SEGURANÇA E LIMITES
+- A reserva é gravada no banco; índice único impede duas reservas confirmadas no mesmo horário.
+- Painel só lê/cancela para usuários autenticados adicionados a admin_users.
+- A notificação WhatsApp só funciona após configurar e implantar a Edge Function e ter template aprovado. Até lá, a reserva no site pode funcionar, mas mensagens automáticas não são garantidas.
+- Faça testes com dados fictícios antes de divulgar.
+- Ainda não há remarcar, lembretes automáticos, feriados ou painel para editar preços.
